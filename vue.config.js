@@ -1,10 +1,15 @@
+const path = require('path')
 const appData = require('./data.json')
 const seller = appData.seller
 const goods = appData.goods
 const ratings = appData.ratings
 
+function resolve (dir) {
+    return path.join(__dirname, dir)
+}
+
 module.exports = {
-  css: {
+    css: {
         loaderOptions: {
             stylus: {
                 'resolve url': true,
@@ -41,5 +46,11 @@ module.exports = {
                 })
             })
         }
+    },
+    chainWebpack(config) {
+        config.resolve.alias
+            .set('pages', resolve('src/pages'))
+            .set('common', resolve('src/common'))
+            .set('api', resolve('src/api'))
     }
 }
