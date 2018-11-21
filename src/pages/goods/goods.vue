@@ -6,6 +6,26 @@
                 :data="goods"
                 :options= "scrollOptions"
                 v-if="goods.length">
+                <template slot="bar" slot-scope="props">
+                    <cube-scroll-nav-bar
+                        direction="vertical"
+                        :labels="props.labels"
+                        :txts="barTxts"
+                        :current="props.current">
+                        <template slot-scope="props">
+                            <div class="text">
+                                <support-icon 
+                                    v-if="props.txt.type >= 1"
+                                    :size=1
+                                    :type="props.txt.type">
+                                </support-icon><span class="name">{{props.txt.name}}</span>
+                                <span class="num" v-if="props.txt.count">
+                                    <bubble :num="props.txt.count"></bubble>
+                                </span>
+                            </div>
+                        </template>
+                    </cube-scroll-nav-bar>
+                </template>
                 <cube-scroll-nav-panel
                     v-for="good in goods"
                     :key="good.name"
@@ -27,7 +47,7 @@
                                     <span class="old" v-show="food.oldPrice">￥{{food.oldPrice}}</span>
                                 </div>
                                 <div class="cart-control-wrapper">
-                                    <cart-control :food="food"></cart-control>
+                                    <cart-control :food="food" @add="onAdd"></cart-control>
                                 </div>
                             </div>
                         </li>
@@ -36,7 +56,7 @@
             </cube-scroll-nav>
         </div>
         <div class="shop-cart-wrapper">
-            <shop-cart :selectFoods="selectFoods"></shop-cart>
+            <shop-cart ref="shopCart" :selectFoods="selectFoods" :deliveryPrice="seller.deliveryPrice" :minPrice="seller.minPrice"></shop-cart>
         </div>
     </div>
 </template>
@@ -44,10 +64,20 @@
 <script>
     import ShopCart from 'pages/shop-cart/shop-cart'
     import CartControl from 'pages/cart-control/cart-control'
+    import SupportIcon from 'pages/support-icon/support-icon'
+    import Bubble from 'pages/bubble/bubble'
     import {getGoods} from 'api'
 
     export default {
         name: "goods",
+        props: {
+            data: {
+                type: Object,
+                default () {
+                    return {}
+                }
+            }
+        },
         data () {
             return {
                 goods: [],
@@ -58,6 +88,9 @@
             }
         },
         computed: {
+            seller () {
+                return this.data.seller
+            },
             selectFoods () {
                 let foods = []
                 this.goods.forEach((good) => {
@@ -68,6 +101,20 @@
                     })
                 })
                 return foods
+            },
+            barTxts () {
+                let ret = []
+                this.goods.forEach((good) => {
+                    const {type, name, foods} = good
+                    let count = 0
+                    foods.forEach((food) => {
+                        count += food.count || 0
+                    })
+                    ret.push({
+                        type,name,count
+                    })
+                })
+                return ret
             }
         },
         methods: {
@@ -75,15 +122,22 @@
                 getGoods().then((goods) => {
                     this.goods = goods
                 })
+            },
+            onAdd (el) {
+                this.$refs.shopCart.drop(el)                
             }
         },
-        components: {ShopCart, CartControl}
+        components: {ShopCart, CartControl, SupportIcon, Bubble}
     }
 </script>
 
 <style lang="stylus" scoped>
     @import "~common/stylus/mixin"
     @import "~common/stylus/variable"
+    .text
+        >>> .support-icon
+            display: inline-block
+            vertical-align: top
     
     .goods
         position: relative

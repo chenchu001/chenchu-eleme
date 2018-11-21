@@ -19,12 +19,13 @@
             }
         },
         methods: {
-            add () {
+            add (event) {
                 if (!this.food.count) {
                     this.$set(this.food, 'count', 1)
                 } else {
                     this.food.count++
                 }
+                this.$emit('add', event.target)
             },
             decrease () {
                 if (this.food.count) {
