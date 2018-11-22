@@ -1,44 +1,33 @@
 <template>
-    <div>
-        <div class="shop-cart" @click="toggleList">
-            <div class="content">
-                <div class="content-left">
-                    <div class="logo-wrapper">
-                        <div class="logo" :class="{'highlight':totalCount>0}">
-                            <span class="icon-shopping_cart" :class="{'highlight':totalCount>0}"></span>
-                        </div>
-                        <!-- 选择多少个商品 -->
-                        <div class="num" v-show="totalCount>0">
-                            <bubble :num="totalCount"></bubble>
-                        </div>
+    <div class="shop-cart" @click="toggleList">
+        <div class="content">
+            <div class="content-left">
+                <div class="logo-wrapper">
+                    <div class="logo" :class="{'highlight':totalCount>0}">
+                        <span class="icon-shopping_cart" :class="{'highlight':totalCount>0}"></span>
                     </div>
-                    <div class="price" :class="{'highlight':totalPrice>0}">￥{{totalPrice}}元</div>
-                    <div class="desc">另需配送费￥{{deliveryPrice}}元</div>
+                    <!-- 选择多少个商品 -->
+                    <div class="num" v-show="totalCount>0">
+                        <bubble :num="totalCount"></bubble>
+                    </div>
                 </div>
-                <div class="content-right" @click.stop.prevent="pay">
-                    <div class="pay" :class="payClass">{{payDesc}}</div>
-                </div>
+                <div class="price" :class="{'highlight':totalPrice>0}">￥{{totalPrice}}元</div>
+                <div class="desc">另需配送费￥{{deliveryPrice}}元</div>
             </div>
-            <!-- 小球 -->
-            <div class="ball-container">
-                <div v-for="(ball, index) in balls" :key="index">
-                    <transition @before-enter="beforeEnter" @enter="enter" @after-enter="afterEnter">
-                        <div class="ball" v-show="ball.show">
-                            <div class="inner inner-hook"></div>
-                        </div>
-                    </transition>
-                </div>
+            <div class="content-right" @click.stop.prevent="pay">
+                <div class="pay" :class="payClass">{{payDesc}}</div>
             </div>
-            <!-- 购物车 -->
-            <shop-cart-list
-                :selectFoods="selectFoods"
-                :totalCount="totalCount"
-                ref="shopCartList"
-                :fold="fold"
-                @empty="empty">
-            </shop-cart-list>
         </div>
-        <!-- <div class="list-mask"></div> -->
+        <!-- 小球 -->
+        <div class="ball-container">
+            <div v-for="(ball, index) in balls" :key="index">
+                <transition @before-enter="beforeEnter" @enter="enter" @after-enter="afterEnter">
+                    <div class="ball" v-show="ball.show">
+                        <div class="inner inner-hook"></div>
+                    </div>
+                </transition>
+            </div>
+        </div>
     </div>
 </template>
 
@@ -78,8 +67,7 @@
         },
         data () {
             return {
-                balls: createBalls(),
-                fold: false
+                balls: createBalls()
             }
         },
         methods: {
@@ -120,13 +108,15 @@
                 }
             },
             toggleList () {
-                if (!this.totalCount) {
-                    return
-                }
-                if (!this.fold) {
-                    this.fold = true
+                if (this.listFold) {
+                    if (!this.totalCount) {
+                        return
+                    }
+                    this.listFold = false
+                    this._showShopCartList()
                 } else {
-                    this.fold = false
+                    this.listFold = true
+                    this._hideShopCartList()
                 }
             },
             empty () {
@@ -155,14 +145,31 @@
                         
                     }
                 }).show()
-                
             },
             pay () {
                 alert('支付')
+            },
+            _showShopCartList () {
+                this.shopCartListComp = this.shopCartListComp || this.$createShopCartList({
+                    $props: {
+                        selectFoods: "selectFoods"
+                    },
+                    $events: {
+                        hide: () => {
+                            this.listFold = true
+                        }
+                    }
+                })
+                this.shopCartListComp.show()
+            },
+            _hideShopCartList () {
+                this.shopCartListComp.hide()
             }
         },
         created () {
             this.dropBalls = []
+            // 默认状态是收起
+            this.listFold = true
         },
         computed: {
             totalPrice () {
@@ -177,9 +184,6 @@
                 this.selectFoods.forEach((food) => {
                     count += food.count
                 })
-                if (count === 0) {
-                    this.fold = false
-                }
                 return count
             },
             payDesc () {
